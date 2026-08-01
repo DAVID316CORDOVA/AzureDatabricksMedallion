@@ -1,0 +1,17 @@
+bundle:
+  name: medallion_project
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405611969133544.4.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405611969133544.4.azuredatabricks.net
+
+include:
+  - resources/*.yml

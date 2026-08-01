@@ -1,0 +1,21 @@
+# Python / venv
+venv/
+__pycache__/
+*.pyc
+
+# dbt
+medallion_dbt/target/
+medallion_dbt/dbt_packages/
+medallion_dbt/logs/
+medallion_dbt/profiles.yml
+
+# Databricks Asset Bundles
+.databricks/
+*.terraform*
+
+# Logs propios
+logs/
+
+# Nunca subir credenciales
+*.env
+.env

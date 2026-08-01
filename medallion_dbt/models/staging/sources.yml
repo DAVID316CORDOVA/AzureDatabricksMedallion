@@ -1,0 +1,9 @@
+version:2
+
+sources:
+  - name: bronze_layer
+    catalogue: medallion_lakehouse
+    schema: bronze
+    tables:
+      - name: clientes
+      - name: pedidos
