@@ -18,7 +18,7 @@ jobs:
         run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
       - name: Deploy bundle a dev
-        run: databricks bundle deploy -t dev
+        run: databricks bundle deploy -t dev --auto-approve
 
       - name: Ejecutar pipeline Bronze en dev
         run: databricks bundle run bronze_medallion_bundle -t dev
