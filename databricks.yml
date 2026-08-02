@@ -6,6 +6,8 @@ variables:
     default: medallion_lakehouse
   bronze_schema:
     default: bronze
+  pipeline_development:
+    default: false
 
 targets:
   dev:
@@ -15,6 +17,7 @@ targets:
       host: https://adb-7405611969133544.4.azuredatabricks.net
     variables:
       bronze_schema: bronze_dev
+      pipeline_development: true
 
   prod:
     mode: production
@@ -22,6 +25,7 @@ targets:
       host: https://adb-7405611969133544.4.azuredatabricks.net
     variables:
       bronze_schema: bronze
+      pipeline_development: false
 
 include:
   - resources/*.yml
