@@ -1,0 +1,51 @@
+# Name of the workflow, shown in the GitHub Actions tab
+name: CD - Deploy to production
+
+# Trigger: run this workflow only when code is pushed to the "main" branch
+# In practice, this happens right after a Pull Request is merged
+on:
+  push:
+    branches: [main]
+
+# A workflow is made of one or more jobs; each job runs on its own fresh virtual machine
+jobs:
+  deploy:
+    # Use a clean Ubuntu virtual machine provided by GitHub
+    runs-on: ubuntu-latest
+
+    # Environment variables available to every step below
+    env:
+      # URL of the Databricks workspace
+      DATABRICKS_HOST: https://adb-7405611969133544.4.azuredatabricks.net
+      # Production token, read securely from GitHub Secrets (never hardcoded)
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+
+    steps:
+      # Step 1: download the repository code onto this fresh machine
+      - uses: actions/checkout@v4
+
+      # Step 2: install the Databricks CLI, needed to run "bundle" commands
+      - name: Install Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      # Step 3: deploy the bundle definition to the "prod" target
+      # This only updates the pipeline/job definitions, it does NOT run them
+      # --auto-approve skips the interactive confirmation prompt, since CI has no terminal to answer it
+      - name: Deploy bundle to prod
+        run: databricks bundle deploy -t prod --auto-approve
+
+      # Step 4: if the deploy above succeeded, notify the team on Slack
+      - name: Notify success to Slack
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"Deploy to PRODUCTION succeeded - commit: ${{ github.sha }}"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # Step 5: if any previous step failed, notify the team on Slack instead
+      - name: Notify failure to Slack
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"Deploy to PRODUCTION FAILED - please check immediately"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
