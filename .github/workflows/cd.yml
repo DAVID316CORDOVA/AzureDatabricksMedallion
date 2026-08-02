@@ -1,0 +1,34 @@
+name: CD - Desplegar a produccion
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: https://adb-7405611969133544.4.azuredatabricks.net
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy bundle a prod
+        run: databricks bundle deploy -t prod --auto-approve
+
+      - name: Notificar éxito a Slack
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"✅ Deploy a PRODUCCION exitoso - commit: ${{ github.sha }}"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notificar fallo a Slack
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"🚨 FALLO al desplegar a PRODUCCION - revisar urgente"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
