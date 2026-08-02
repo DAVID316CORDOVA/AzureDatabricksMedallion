@@ -1,0 +1,47 @@
+name: CI - Validar en dev
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: https://adb-7405611969133544.4.azuredatabricks.net
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+      DBT_DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy bundle a dev
+        run: databricks bundle deploy -t dev
+
+      - name: Ejecutar pipeline Bronze en dev
+        run: databricks bundle run bronze_medallion_bundle -t dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dbt
+        run: pip install dbt-core dbt-databricks
+
+      - name: dbt deps
+        working-directory: ./medallion_dbt
+        run: dbt deps
+
+      - name: dbt build
+        working-directory: ./medallion_dbt
+        run: dbt build
+
+      - name: Notificar a Slack si falla
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"❌ CI falló en PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
