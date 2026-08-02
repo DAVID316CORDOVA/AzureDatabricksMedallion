@@ -41,7 +41,7 @@ resources:
             schema: silver
             commands:
               - "dbt deps"
-              - "dbt build"
+              - "dbt build --vars '{bronze_schema: ${var.bronze_schema}, silver_schema: ${var.silver_schema}, gold_schema: ${var.gold_schema}}'"
 
       email_notifications:
         on_failure:

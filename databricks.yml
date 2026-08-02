@@ -6,6 +6,10 @@ variables:
     default: medallion_lakehouse
   bronze_schema:
     default: bronze
+  silver_schema:
+    default: silver
+  gold_schema:
+    default: gold
   pipeline_development:
     default: false
 
@@ -17,6 +21,8 @@ targets:
       host: https://adb-7405611969133544.4.azuredatabricks.net
     variables:
       bronze_schema: bronze_dev
+      silver_schema: silver_dev
+      gold_schema: gold_dev
       pipeline_development: true
 
   prod:
@@ -26,6 +32,8 @@ targets:
       root_path: /Workspace/Users/felix.david.cordova.garcia@gmail.com/.bundle/${bundle.name}/${bundle.target}
     variables:
       bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
       pipeline_development: false
 
 include:
