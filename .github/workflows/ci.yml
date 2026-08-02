@@ -34,6 +34,23 @@ jobs:
       - name: Instalar dbt
         run: pip install dbt-core dbt-databricks
 
+      - name: Crear profiles.yml para el CI
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'PROFILE'
+          medallion_dbt:
+            target: dev
+            outputs:
+              dev:
+                type: databricks
+                catalog: medallion_lakehouse
+                schema: silver
+                host: adb-7405611969133544.4.azuredatabricks.net
+                http_path: /sql/1.0/warehouses/a8fd1c152b89c33b
+                token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}"
+                threads: 4
+          PROFILE
+
       - name: dbt deps
         working-directory: ./medallion_dbt
         run: dbt deps
