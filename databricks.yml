@@ -23,6 +23,7 @@ targets:
     mode: production
     workspace:
       host: https://adb-7405611969133544.4.azuredatabricks.net
+      root_path: /Workspace/Users/felix.david.cordova.garcia@gmail.com/.bundle/${bundle.name}/${bundle.target}
     variables:
       bronze_schema: bronze
       pipeline_development: false
