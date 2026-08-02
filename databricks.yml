@@ -1,17 +1,27 @@
 bundle:
   name: medallion_project
 
+variables:
+  catalog:
+    default: medallion_lakehouse
+  bronze_schema:
+    default: bronze
+
 targets:
   dev:
     mode: development
     default: true
     workspace:
       host: https://adb-7405611969133544.4.azuredatabricks.net
+    variables:
+      bronze_schema: bronze_dev
 
   prod:
     mode: production
     workspace:
       host: https://adb-7405611969133544.4.azuredatabricks.net
+    variables:
+      bronze_schema: bronze
 
 include:
   - resources/*.yml

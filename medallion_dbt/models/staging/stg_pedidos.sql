@@ -1,5 +1,5 @@
 with source as (
-    select * from source {{ source('bronze_layer','pedidos') }}
+    select * from {{ source('bronze_layer','pedidos') }}
 ),
 deduplicado as (
     select DISTINCT * from source

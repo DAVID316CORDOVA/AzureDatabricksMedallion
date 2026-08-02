@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_clientes
+    columns:
+      - name: cliente_id
+        tests:
+          - not_null
+      - name: email
+        tests:
+          - not_null
+
+  - name: stg_pedidos
+    columns:
+      - name: pedido_id
+        tests:
+          - not_null
+      - name: cliente_id
+        tests:
+          - relationships:
+              to: ref('stg_clientes')
+              field: cliente_id
+              config:
+                severity: warn
