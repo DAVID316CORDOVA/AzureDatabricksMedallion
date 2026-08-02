@@ -20,6 +20,9 @@ jobs:
       - name: Deploy bundle a dev
         run: databricks bundle deploy -t dev --auto-approve
 
+      - name: Debug - ver estado del bundle
+        run: databricks bundle summary -t dev
+
       - name: Ejecutar pipeline Bronze en dev
         run: databricks bundle run bronze_medallion_bundle -t dev
 
