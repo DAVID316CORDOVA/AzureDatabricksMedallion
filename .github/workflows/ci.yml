@@ -11,14 +11,9 @@ jobs:
     # Use a fresh Ubuntu virtual machine for this job
     runs-on: ubuntu-latest
 
-    # Environment variables available to every step in this job
     env:
-      # URL of the Databricks workspace
       DATABRICKS_HOST: https://adb-7405611969133544.4.azuredatabricks.net
-      # Dev token used by the Databricks CLI, read securely from GitHub Secrets
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
-      # Same token, under the name dbt's profiles.yml expects via env_var()
-      DBT_DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
 
     steps:
       # Step 1: download the repository code onto this fresh machine
@@ -28,57 +23,17 @@ jobs:
       - name: Install Databricks CLI
         run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
-      # Step 3: create or update the DLT pipeline definition in the dev environment
-      # --auto-approve skips the interactive confirmation, since CI has no terminal to answer it
+      # Step 3: deploy both the pipeline and the job definitions to the dev environment
       - name: Deploy bundle to dev
         run: databricks bundle deploy -t dev --auto-approve
 
-      # Step 4: run the pipeline that was just deployed
-      # This actually executes the Autoloader logic and populates the bronze_dev tables
-      - name: Run Bronze pipeline in dev
-        run: databricks bundle run bronze_medallion_bundle -t dev
+      # Step 4: run the full orchestrated job (bronze pipeline + dbt build)
+      # This is the same job that runs in production, so CI now tests the
+      # real end-to-end flow instead of testing bronze and dbt separately
+      - name: Run full medallion job in dev
+        run: databricks bundle run medallion_full_pipeline -t dev
 
-      # Step 5: install Python, needed to run dbt
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # Step 6: install dbt and the Databricks adapter
-      - name: Install dbt
-        run: pip install dbt-core dbt-databricks
-
-      # Step 7: this machine has no local profiles.yml, so we generate one here
-      # The token is injected via env_var(), never written in plain text
-      - name: Create profiles.yml for CI
-        run: |
-          mkdir -p ~/.dbt
-          cat > ~/.dbt/profiles.yml << 'PROFILE'
-          medallion_dbt:
-            target: dev
-            outputs:
-              dev:
-                type: databricks
-                catalog: medallion_lakehouse
-                schema: silver
-                host: adb-7405611969133544.4.azuredatabricks.net
-                http_path: /sql/1.0/warehouses/a8fd1c152b89c33b
-                token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}"
-                threads: 4
-          PROFILE
-
-      # Step 8: install dbt package dependencies (dbt_utils, dbt_expectations)
-      - name: Install dbt packages
-        working-directory: ./medallion_dbt
-        run: dbt deps
-
-      # Step 9: build all models and run all data quality tests
-      # This is the same command already validated locally on the developer's machine
-      - name: Run dbt build and tests
-        working-directory: ./medallion_dbt
-        run: dbt build
-
-      # Step 10: if any step above failed, post an alert to the team Slack channel
+      # Step 5: if any step above failed, post an alert to the team Slack channel
       - name: Notify Slack on failure
         if: failure()
         run: |
