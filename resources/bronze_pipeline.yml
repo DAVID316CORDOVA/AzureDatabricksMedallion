@@ -1,0 +1,11 @@
+resources:
+  pipelines:
+    bronze_medallion_bundle:
+      name: bronze_medallion_bundle
+      catalog: ${var.catalog}
+      target: ${var.bronze_schema}
+      serverless: true
+      development: true
+      libraries:
+        - file:
+            path: ../notebooks/bronze_medallion_dlt.py

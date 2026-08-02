@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: dim_clientes
+    columns:
+      - name: cliente_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_pedidos
+    columns:
+      - name: pedido_id
+        tests:
+          - unique
+          - not_null
+      - name: monto_total
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: mart_ventas_por_ciudad
+    columns:
+      - name: ingresos_totales
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0

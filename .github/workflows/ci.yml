@@ -1,0 +1,67 @@
+name: CI - Validar en dev
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: https://adb-7405611969133544.4.azuredatabricks.net
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+      DBT_DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy bundle a dev
+        run: databricks bundle deploy -t dev --auto-approve
+
+      - name: Debug - ver estado del bundle
+        run: databricks bundle summary -t dev
+
+      - name: Ejecutar pipeline Bronze en dev
+        run: databricks bundle run bronze_medallion_bundle -t dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dbt
+        run: pip install dbt-core dbt-databricks
+
+      - name: Crear profiles.yml para el CI
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'PROFILE'
+          medallion_dbt:
+            target: dev
+            outputs:
+              dev:
+                type: databricks
+                catalog: medallion_lakehouse
+                schema: silver
+                host: adb-7405611969133544.4.azuredatabricks.net
+                http_path: /sql/1.0/warehouses/a8fd1c152b89c33b
+                token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}"
+                threads: 4
+          PROFILE
+
+      - name: dbt deps
+        working-directory: ./medallion_dbt
+        run: dbt deps
+
+      - name: dbt build
+        working-directory: ./medallion_dbt
+        run: dbt build
+
+      - name: Notificar a Slack si falla
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"❌ CI falló en PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
