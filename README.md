@@ -11,6 +11,18 @@ MySQL (source) -> Azure Synapse (extraction + orchestration) -> ADLS Gen2 (raw)
 
 ---
 
+## Purpose
+
+Customer and order data coming from operational systems is rarely clean: duplicate customer records under different emails, orders referencing customers that no longer exist, inconsistent date formats, and fields that arrive as free text instead of validated numbers. Left unhandled, these issues silently corrupt downstream reporting: revenue gets double-counted, customer counts get inflated, and dashboards quietly become unreliable without anyone noticing until a stakeholder questions a number.
+
+This project builds a pipeline designed around that reality instead of around a pre-cleaned dataset, to demonstrate:
+
+- **Data quality enforcement as a first-class layer**, not an afterthought: every transformation from Bronze to Gold either resolves a specific data quality problem (deduplication, orphaned foreign keys, invalid types) or explicitly flags it for visibility, backed by automated dbt tests that fail the build when a rule is violated.
+- **A production-style CI/CD setup**, not a notebook run manually before a demo: every pull request deploys to an isolated dev environment and runs the full pipeline end to end, including all data quality tests, before code is allowed into `main`; production deployment is a separate, automated step triggered only after that validation passes.
+- **Environment isolation done through configuration, not duplication**: dev and prod share the exact same pipeline and job definitions, differing only through Databricks Asset Bundle variables, which is the same approach used to safely promote changes in a real multi-environment setup.
+
+---
+
 ## Architecture
 
 ### Orchestration pipeline (Azure Synapse)
