@@ -164,7 +164,7 @@ Two workflows separate validation from deployment, each authenticating against a
 |-- resources/                Databricks Asset Bundle resource definitions (pipeline, job)
 |-- scripts/                  Source data generator (MySQL)
 |-- databricks.yml            Bundle configuration: variables and targets (dev/prod)
-`-- CLAUDE.md                 Internal development notes: status, roadmap, conventions
+
 ```
 
 ---
